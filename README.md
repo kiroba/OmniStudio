@@ -1,6 +1,6 @@
-# Phaser-Studio
+# OmniStudio
 
-Phaser Studio for The Omniverse. Split out of [kiroba/The-Omniverse](https://github.com/kiroba/The-Omniverse) with its git history (Oct 30 2026).
+OmniStudio for The Omniverse. Split out of [kiroba/The-Omniverse](https://github.com/kiroba/The-Omniverse) with its git history (Oct 30 2026).
 
 ## Build
 ```
