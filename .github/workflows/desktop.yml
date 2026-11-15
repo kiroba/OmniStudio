@@ -1,0 +1,61 @@
+name: Desktop Builds (Windows + Linux)
+
+# OmniStudio desktop client CI — Slice 1 (2026-11-15).
+# Mirrors the Plaza-Brawler windows/build pin: Flutter 3.47.9, NOT the
+# local 3.50 line (3.50 breaks AGP combos and treats infos as failures).
+# The existing Android workflow (build.yml) is untouched.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.47.9'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Windows (release)
+        run: flutter build windows --release
+      - name: Package
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath omnistudio-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omnistudio-windows-x64
+          path: omnistudio-windows-x64.zip
+
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.47.9'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Linux (release)
+        run: flutter build linux --release
+      - name: Package
+        run: tar -czf omnistudio-linux-x64.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omnistudio-linux-x64
+          path: omnistudio-linux-x64.tar.gz

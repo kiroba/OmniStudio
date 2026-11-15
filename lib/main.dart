@@ -5,11 +5,17 @@
 // Tag: [FUNDAMENTAL_FEATURE_TAG: LOCALSEND_PHASER_STUDIO_V1]
 // ============================================================================
 
+import 'dart:async';
+import 'dart:io' show File, Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_core_ui/omni_core_ui.dart' show OmniOta;
 
-void main() {
+import 'studio_api.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const OmniPhaserStudioApp());
 }
@@ -88,6 +94,66 @@ class _PhaserStudioShellState extends State<PhaserStudioShell> {
   final String _hardwareKey = "0x8F92A1B439C0E71D000000000000000000000000000000000000000000000001";
   bool _isCompiled = false;
   String _statusMessage = "Ready to package .omnimod archive";
+
+  // Local API hook (spec 2026-11-15): desktop only, read-only, loopback.
+  StudioApiServer? _studioApi;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!kIsWeb &&
+        (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+      unawaited(_startStudioApi());
+    }
+  }
+
+  @override
+  void dispose() {
+    final StudioApiServer? api = _studioApi;
+    if (api != null) {
+      unawaited(api.stop());
+    }
+    super.dispose();
+  }
+
+  Future<void> _startStudioApi() async {
+    final StudioApiServer api = StudioApiServer(
+      provider: _studioSnapshot,
+      version: '5.4.0+540', // matches pubspec version
+    );
+    _studioApi = api;
+    final bool started = await api.start();
+    if (!started) return; // Hook stays off; the app runs normally.
+    try {
+      // Spec: token written to a local token file so a same-machine agent
+      // can find it. v1 uses studio_api_token.txt in the working directory.
+      await File('studio_api_token.txt').writeAsString(api.token);
+    } catch (_) {
+      // Token file is a convenience for local callers; never gate the app.
+    }
+  }
+
+  // Snapshot for the API hook. Form state only — the hard-coded
+  // _hardwareKey placeholder is deliberately NOT exposed here.
+  Map<String, Object?> _studioSnapshot() {
+    return <String, Object?>{
+      'state': <String, Object?>{
+        'activeTab': _activeTab,
+        'selectedIndustry': _selectedIndustry,
+        'title': _titleController.text,
+        'modId': _modIdController.text,
+        'authorHandle': _authorHandleController.text,
+        'description': _descController.text,
+        'isCompiled': _isCompiled,
+        'statusMessage': _statusMessage,
+      },
+      'library': <String, Object?>{
+        'spritesheets': _spritesheets,
+        'tilemaps': _tilemaps,
+        'audioBanks': _audioBanks,
+      },
+    };
+  }
 
   void _switchTab(int newIndex) {
     if (_activeTab != newIndex) {
