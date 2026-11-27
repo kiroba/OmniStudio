@@ -1,8 +1,7 @@
 name: Desktop Builds (Windows + Linux)
 
 # OmniStudio desktop client CI — Slice 1 (2026-11-15).
-# Mirrors the Plaza-Brawler windows/build pin: Flutter 3.47.9, NOT the
-# local 3.50 line (3.50 breaks AGP combos and treats infos as failures).
+# Mirrors the Plaza-Brawler windows/build pin: Flutter 3.50.1.
 # The existing Android workflow (build.yml) is untouched.
 
 on:
@@ -24,7 +23,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.9'
+          flutter-version: '3.50.1'
       - name: Install dependencies
         run: flutter pub get
       - name: Build Windows (release)
@@ -48,7 +47,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.47.9'
+          flutter-version: '3.50.1'
       - name: Install dependencies
         run: flutter pub get
       - name: Build Linux (release)
